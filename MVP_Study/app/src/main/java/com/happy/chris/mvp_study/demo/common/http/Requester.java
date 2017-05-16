@@ -3,8 +3,7 @@ package com.happy.chris.mvp_study.demo.common.http;
 import okhttp3.Request;
 
 /**
- * package: com.happy.chris.uestcliblogin.common.http
- * company: 安康应急
+ * package: com.happy.chris.mvp_study.common.http
  * <p>
  * description:
  * <p>
