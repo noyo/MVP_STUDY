@@ -14,6 +14,7 @@ public class HttpBody {
     String url;
     Bundle bundle;
     HttpType httpType;
+    HttpCallBack callBack = null;
     
     enum HttpType {
         UPLOAD,
