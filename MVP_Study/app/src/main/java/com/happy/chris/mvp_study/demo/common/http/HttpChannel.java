@@ -1,15 +1,17 @@
 package com.happy.chris.mvp_study.demo.common.http;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.happy.chris.mvp_study.*;
 import com.happy.chris.mvp_study.demo.common.util.log.LogUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -32,15 +34,40 @@ public class HttpChannel {
     private final static MediaType UPLOAD = MediaType.parse("multipart/form-data; charset=utf-8");
     private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
     
-    public final static HttpChannel mInstance = new HttpChannel();
+    private final static HttpChannel mInstance = new HttpChannel();
     private OkHttpClient mOkClient;
+    private static List<BaseCallBack> mHttpListeners;
     
     private HttpChannel() {
         mOkClient = OkHttpWrapper.getInstance().getOkHttpClient();
     }
-    
-    public static HttpChannel getInstance() {
+
+    /**
+     *
+     * @param callBack register
+     * @return HttpChannel Instance
+     */
+    public static HttpChannel getInstance(BaseCallBack callBack) {
+        if (mHttpListeners == null) {
+            mHttpListeners = new ArrayList<>();
+        }
+        if (!mHttpListeners.contains(callBack)) {
+            mHttpListeners.add(callBack);
+        }
         return mInstance;
+    }
+
+    public void unregister(BaseCallBack callBack) {
+        if (mHttpListeners.contains(callBack)) {
+            mHttpListeners.remove(callBack);
+        }
+    }
+
+    public void unregisterAll() {
+        if (mHttpListeners != null) {
+            mHttpListeners.clear();
+            mHttpListeners = null;
+        }
     }
     
     /**
@@ -77,15 +104,19 @@ public class HttpChannel {
      */
     private void doRequest(final Request request){
         
-        mHttpClient.newCall(request).enqueue(new Callback() {
+        mOkClient.newCall(request).enqueue(new HttpCallBack() {
             @Override
-            public void onFailure(Call call, IOException e) {
-                
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                for (BaseCallBack callBack : mHttpListeners) {
+                    callBack.onFailure(call, e);
+                }
             }
             
             @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                for (BaseCallBack callBack : mHttpListeners) {
+                    callBack.onResponse(call, response);
+                }
             }
         });
     }

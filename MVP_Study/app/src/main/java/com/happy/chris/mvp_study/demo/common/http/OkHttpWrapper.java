@@ -124,7 +124,7 @@ public class OkHttpWrapper {
             
         }
         
-        public synchronized static SslVerify getInstance() {
+        synchronized static SslVerify getInstance() {
             return new SslVerify();
         }
         
@@ -132,7 +132,7 @@ public class OkHttpWrapper {
          * 设置证书
          * @param builder OkHttpClient.Builder
          */
-        public void setCertificates(OkHttpClient.Builder builder) {
+        void setCertificates(OkHttpClient.Builder builder) {
             SSLSocketFactory socketFactory = getSslSocketFactory();
             if (socketFactory == null) {
                 socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -147,7 +147,7 @@ public class OkHttpWrapper {
          *
          * @return SSLSocketFactory
          */
-        public SSLSocketFactory getSslSocketFactory() {
+        SSLSocketFactory getSslSocketFactory() {
             TrustManager[] trustManagers = new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return new X509Certificate[]{};
