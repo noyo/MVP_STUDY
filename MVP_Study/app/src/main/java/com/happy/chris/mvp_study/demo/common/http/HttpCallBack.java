@@ -20,13 +20,15 @@ import okhttp3.Response;
  */
 
 public class HttpCallBack<T> implements BaseCallBack<T> {
+
+    private Type mType = this.getClass().getGenericSuperclass();
+
     @Override
     @SuppressWarnings("unchecked")
     public T onResponse(Response response) throws IOException {
-        Type type = this.getClass().getGenericSuperclass();
-        if (type instanceof ParameterizedType) {
+        if (mType instanceof ParameterizedType) {
             //如果用户写了泛型，就会进入这里，否者不会执行
-            ParameterizedType parameterizedType = (ParameterizedType) type;
+            ParameterizedType parameterizedType = (ParameterizedType) mType;
             Type beanType = parameterizedType.getActualTypeArguments()[0];
             if (beanType == String.class) {
                 //如果是String类型，直接返回字符串
@@ -43,11 +45,9 @@ public class HttpCallBack<T> implements BaseCallBack<T> {
     
     @Override
     public void onFailure(@NonNull Call call, @NonNull IOException e) {
-        
     }
     
     @Override
     public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-        
     }
 }

@@ -31,15 +31,15 @@ import okhttp3.OkHttpClient;
  */
 
 public class OkHttpWrapper {
-    
+
     private final static Byte[] LOCK_BYTE = new Byte[0];
     private static OkHttpWrapper mInstance;
     private OkHttpClient mOkClient;
-    
+
     private OkHttpWrapper() {
         mOkClient = getOkHttpClientBuilder().build();
     }
-    
+
     public static OkHttpWrapper getInstance() {
         if (mInstance == null) {
             synchronized (LOCK_BYTE) {
@@ -50,26 +50,27 @@ public class OkHttpWrapper {
         }
         return mInstance;
     }
-    
+
     public OkHttpClient getOkHttpClient() {
         return mOkClient;
     }
-    
+
     /**
      * get OkHttp builder
+     *
      * @return Builder
      */
     private OkHttpClient.Builder getOkHttpClientBuilder() {
         OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
-        
+
         okHttpClientBuilder.cookieJar(new CookieJar() {//cookie
             HashMap<String, List<Cookie>> cookieStore = new HashMap<>();
-            
+
             @Override
             public void saveFromResponse(@NonNull HttpUrl url, @NonNull List<Cookie> cookies) {
                 cookieStore.put(url.host(), cookies);
             }
-            
+
             @Override
             public List<Cookie> loadForRequest(@NonNull HttpUrl url) {
                 List<Cookie> cookies = cookieStore.get(url.host());
@@ -82,12 +83,12 @@ public class OkHttpWrapper {
             }
         }).connectTimeout(10, TimeUnit.SECONDS)//设置超时
                 .readTimeout(10, TimeUnit.SECONDS);
-        
+
         SslVerify.getInstance().setCertificates(okHttpClientBuilder);
-        
+
         return okHttpClientBuilder;
     }
-    
+
     /**
      * 发起网络请求时设置tag，在这可以根据tag取消、中断响应请求
      *
@@ -98,41 +99,55 @@ public class OkHttpWrapper {
             for (Call call : mOkClient.dispatcher().queuedCalls()) {
                 if (tag.equals(call.request().tag())) {
                     call.cancel();
+                    break;
                 }
             }
         }
     }
-    
+
+    /**
+     * 发起网络请求时设置tag，在这可以根据tag取消、中断响应请求
+     */
+    public void cancelAllByTag() {
+        if (mOkClient != null) {
+            for (Call call : mOkClient.dispatcher().queuedCalls()) {
+                call.cancel();
+            }
+        }
+    }
+
     /**
      * destroy
      */
     public void onDestroy() {
         if (null != mInstance) {
             synchronized (LOCK_BYTE) {
+                cancelAllByTag();
                 mOkClient = null;
                 mInstance = null;
             }
         }
     }
-    
+
     /**
      * SSL证书验证
      */
     private static class SslVerify {
-        
+
         private SslVerify() {
-            
+
         }
-        
-        public synchronized static SslVerify getInstance() {
+
+        synchronized static SslVerify getInstance() {
             return new SslVerify();
         }
-        
+
         /**
          * 设置证书
+         *
          * @param builder OkHttpClient.Builder
          */
-        public void setCertificates(OkHttpClient.Builder builder) {
+        void setCertificates(OkHttpClient.Builder builder) {
             SSLSocketFactory socketFactory = getSslSocketFactory();
             if (socketFactory == null) {
                 socketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -141,22 +156,22 @@ public class OkHttpWrapper {
                 builder.sslSocketFactory(socketFactory);
             }
         }
-    
+
         /**
          * 网站证书验证: 覆盖X509TrustManager，信任所有证书
          *
          * @return SSLSocketFactory
          */
-        public SSLSocketFactory getSslSocketFactory() {
+        SSLSocketFactory getSslSocketFactory() {
             TrustManager[] trustManagers = new TrustManager[]{new X509TrustManager() {
                 public X509Certificate[] getAcceptedIssuers() {
                     return new X509Certificate[]{};
                 }
-            
+
                 public void checkClientTrusted(X509Certificate[] chain,
                                                String authType) throws CertificateException {
                 }
-            
+
                 public void checkServerTrusted(X509Certificate[] chain,
                                                String authType) throws CertificateException {
                 }
