@@ -1,0 +1,45 @@
+package com.happy.chris.mvp_study.demo.common;
+
+import com.google.gson.Gson;
+import com.happy.chris.mvp_study.demo.common.http.BaseCallBack;
+
+import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+
+import okhttp3.Response;
+
+/**
+ * package: com.happy.chris.mvp_study.demo.common
+ * <p>
+ * description:
+ * <p>
+ * Created by zhouzhaojun on 2017/5/19.
+ */
+
+public abstract class BaseRepository<T> implements BaseCallBack<T> {
+    
+    private final static Byte[] LOCK = new Byte[0];
+    
+    private Type mType = this.getClass().getGenericSuperclass();
+    
+    @Override
+    @SuppressWarnings("unchecked")
+    public T onResponse(Response response) throws IOException {
+        if (mType instanceof ParameterizedType) {
+            //如果用户写了泛型，就会进入这里，否者不会执行
+            ParameterizedType parameterizedType = (ParameterizedType) mType;
+            Type beanType = parameterizedType.getActualTypeArguments()[0];
+            if (beanType == String.class) {
+                //如果是String类型，直接返回字符串
+                return (T) response.body().string();
+            } else {
+                //如果是 Bean List Map ，则解析完后返回
+                return new Gson().fromJson(response.body().string(), beanType);
+            }
+        } else {
+            //如果没有写泛型，直接返回Response对象
+            return (T) response;
+        }
+    }
+}
