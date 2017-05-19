@@ -12,9 +12,11 @@ import java.util.List;
  * Created by zhouzhaojun on 2017/5/16.
  */
 
-public class HttpException {
+public class HttpException extends Exception {
 
     public final static int ERROR_HTTP_FAILED = 1;
+    
+    public final static int ERROR_REQUEST_NULL = 10;
     
     int mErrorCode;
     Throwable mThrowable;

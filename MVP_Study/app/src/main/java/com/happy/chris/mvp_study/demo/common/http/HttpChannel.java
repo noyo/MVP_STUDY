@@ -4,11 +4,14 @@ import android.util.Log;
 
 import com.happy.chris.mvp_study.demo.common.util.log.LogUtils;
 
+import net.sf.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import okhttp3.FormBody;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -18,6 +21,7 @@ import okhttp3.Response;
 import okio.Buffer;
 
 import static com.happy.chris.mvp_study.demo.common.http.HttpException.ERROR_HTTP_FAILED;
+import static com.happy.chris.mvp_study.demo.common.http.HttpException.ERROR_REQUEST_NULL;
 
 /**
  * package: com.happy.chris.mvp_study.demo.common.http
@@ -56,12 +60,15 @@ public class HttpChannel {
      *                 not null: asynchronous
      * @return response
      */
-    public Object startHttp(HttpBody body, BaseCallBack callback) {
+    public Object startHttp(HttpBody body, BaseCallBack callback) throws HttpException {
+        Request request = null;
+        Request.Builder builder = new Request.Builder().url(body.url);
         HttpBody.HttpType type = body.httpType;
         switch (type) {
             case GET:
                 break;
             case POST_JSON:
+                builder.post(FormBody.create(JSON, JSONObject.fromMap(body.body).toString()));
                 break;
             case UPLOAD:
                 break;
@@ -74,11 +81,24 @@ public class HttpChannel {
                 LogUtils.I(TAG, "POST_MULTI: this function had not yet been kept");
                 break;
         }
+        
+        /* tag:help to cancel the request */
+        builder.tag(body);
+        
+        /* add header */
+        for (String key : body.header.keySet()) {
+            builder.addHeader(key, body.header.get(key));
+        }
+        
+        /* start request */
+        if (request == null) {
+            throw new HttpException(ERROR_REQUEST_NULL);
+        }
         if (callback == null) {
-            doRequest(new Request.Builder().build(), callback);
-            return null;
+            return doSyncRequest(null);
         } else {
-            return doRequest(null);
+            doAsyncRequest(new Request.Builder().build(), callback);
+            return null;
         }
     }
 
@@ -87,13 +107,12 @@ public class HttpChannel {
      *
      * @param request request body
      */
-    private Object doRequest(Request request) {
+    private Object doSyncRequest(Request request) throws HttpException {
         try {
             return mOkClient.newCall(request).execute();
         } catch (IOException e) {
-            new HttpException(e, ERROR_HTTP_FAILED);
+            throw new HttpException(e, ERROR_HTTP_FAILED);
         }
-        return null;
     }
 
     /**
@@ -102,7 +121,7 @@ public class HttpChannel {
      * @param callback null: synchronization
      *                 not null: asynchronous
      */
-    private void doRequest(Request request, BaseCallBack callback) {
+    private void doAsyncRequest(Request request, BaseCallBack callback) {
         mOkClient.newCall(request).enqueue(callback);
     }
 

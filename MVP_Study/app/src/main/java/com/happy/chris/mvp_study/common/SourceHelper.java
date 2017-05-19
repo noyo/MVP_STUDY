@@ -1,7 +1,7 @@
 package com.happy.chris.mvp_study.common;
 
+import com.happy.chris.mvp_study.demo.common.http.OkHttpWrapper;
 import com.happy.chris.mvp_study.handler.CallBack;
-import com.happy.chris.mvp_study.http.OkHttpWrapper;
 
 import java.util.ArrayList;
 import java.util.List;

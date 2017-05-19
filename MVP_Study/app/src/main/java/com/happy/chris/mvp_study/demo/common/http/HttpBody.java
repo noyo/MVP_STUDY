@@ -2,6 +2,9 @@ package com.happy.chris.mvp_study.demo.common.http;
 
 import android.os.Bundle;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * package: com.happy.chris.mvp_study.demo.common.http
  * <p>
@@ -12,9 +15,9 @@ import android.os.Bundle;
 
 public class HttpBody {
     String url;
-    Bundle bundle;
+    Map<String, String> header = new HashMap<>();
+    Map<String, String> body = new HashMap<>();
     HttpType httpType;
-    HttpCallBack callBack = null;
     
     enum HttpType {
         UPLOAD,
